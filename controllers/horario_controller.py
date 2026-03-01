@@ -19,6 +19,7 @@ class HorarioController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear horario")
         finally:
             conn.close()
         
@@ -29,25 +30,22 @@ class HorarioController:
             cursor = conn.cursor()
             cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_salon, s.codigo, h.id_jornada, j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada WHERE id_horario = %s", (horario_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
             
-            content={
-                    'id':int(result[0]),
-                    'id_grupo':int(result[1]),
-                    'codigo_grupo':result[2],
-                    'id_salon':int(result[3]),
-                    'codigo_salon':result[4],
-                    'id_jornada':int(result[5]),
-                    'jornada':result[6],
-                    'dia_semana':result[7],
-                    'hora_inicio':result[8],
-                    'hora_fin':result[9]
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
             if result:
+                content={
+                        'id':int(result[0]),
+                        'id_grupo':int(result[1]),
+                        'codigo_grupo':result[2],
+                        'id_salon':int(result[3]),
+                        'codigo_salon':result[4],
+                        'id_jornada':int(result[5]),
+                        'jornada':result[6],
+                        'dia_semana':result[7],
+                        'hora_inicio':result[8],
+                        'hora_fin':result[9]
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -60,6 +58,7 @@ class HorarioController:
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener horario")
         finally:
             conn.close()
     
@@ -69,25 +68,26 @@ class HorarioController:
             cursor = conn.cursor()
             cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_salon, s.codigo, h.id_jornada, j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'id_grupo':data[1],
-                    'codigo_grupo':data[2],
-                    'id_salon':data[3],
-                    'codigo_salon':data[4],
-                    'id_jornada':data[5],
-                    'jornada':data[6],
-                    'dia_semana':data[7],
-                    'hora_inicio':data[8],
-                    'hora_fin':data[9]
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
+
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'id_grupo':data[1],
+                        'codigo_grupo':data[2],
+                        'id_salon':data[3],
+                        'codigo_salon':data[4],
+                        'id_jornada':data[5],
+                        'jornada':data[6],
+                        'dia_semana':data[7],
+                        'hora_inicio':data[8],
+                        'hora_fin':data[9]
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
                 raise HTTPException(status_code=404, detail="horario not found")  
@@ -95,5 +95,6 @@ class HorarioController:
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener horarios")
         finally:
             conn.close()

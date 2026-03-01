@@ -19,6 +19,7 @@ class GrupoController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear grupo")
         finally:
             conn.close()
         
@@ -29,25 +30,22 @@ class GrupoController:
             cursor = conn.cursor()
             cursor.execute("SELECT g.id_grupo, g.id_semestre, s.nombre, g.id_asignatura, a.nombre, g.id_jornada, j.nombre, g.codigo_grupo, g.cupo, g.estado FROM grupos g join semestres s on g.id_semestre = s.id_semestre join asignaturas a on g.id_asignatura = a.id_asignatura join jornadas j on g.id_jornada = j.id_jornada WHERE id_grupo = %s", (grupo_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
             
-            content={
-                    'id':int(result[0]),
-                    'id_semestre':int(result[1]),
-                    'semestre':result[2],
-                    'id_asignatura':int(result[3]),
-                    'asignatura':result[4],
-                    'id_jornada':int(result[5]),
-                    'jornada':result[6],
-                    'codigo':result[7],
-                    'cupo':int(result[8]),
-                    'estado':bool(result[9])
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
             if result:
+                content={
+                        'id':int(result[0]),
+                        'id_semestre':int(result[1]),
+                        'semestre':result[2],
+                        'id_asignatura':int(result[3]),
+                        'asignatura':result[4],
+                        'id_jornada':int(result[5]),
+                        'jornada':result[6],
+                        'codigo':result[7],
+                        'cupo':int(result[8]),
+                        'estado':bool(result[9])
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -60,6 +58,7 @@ class GrupoController:
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener grupo")
         finally:
             conn.close()
     
@@ -69,25 +68,26 @@ class GrupoController:
             cursor = conn.cursor()
             cursor.execute("SELECT g.id_grupo, g.id_semestre, s.nombre, g.id_asignatura, a.nombre, g.id_jornada, j.nombre, g.codigo_grupo, g.cupo, g.estado FROM grupos g join semestres s on g.id_semestre = s.id_semestre join asignaturas a on g.id_asignatura = a.id_asignatura join jornadas j on g.id_jornada = j.id_jornada")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'id_semestre':data[1],
-                    'semestre':data[2],
-                    'id_asignatura':data[3],
-                    'asignatura':data[4],
-                    'id_jornada':data[5],
-                    'jornada':data[6],
-                    'codigo':data[7],
-                    'cupo':int(data[8]),
-                    'estado':bool(data[9])
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
+
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'id_semestre':data[1],
+                        'semestre':data[2],
+                        'id_asignatura':data[3],
+                        'asignatura':data[4],
+                        'id_jornada':data[5],
+                        'jornada':data[6],
+                        'codigo':data[7],
+                        'cupo':int(data[8]),
+                        'estado':bool(data[9])
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
                 raise HTTPException(status_code=404, detail="grupo not found")  
@@ -95,5 +95,6 @@ class GrupoController:
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener grupos")
         finally:
             conn.close()

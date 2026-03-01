@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from controllers.grupo_controller import *
 from models.grupo_model import Grupo
+from validations.grupo_validation import validate
 
 router = APIRouter()
 
@@ -9,6 +10,10 @@ nuevo_grupo = GrupoController()
 
 @router.post("/create_grupo")
 async def create_grupo(grupo: Grupo):
+    validation = validate(grupo)
+    if "error" in validation:
+        raise HTTPException(status_code=400, detail=validation["error"])
+    
     rpta = nuevo_grupo.create_grupo(grupo)
     return rpta
 

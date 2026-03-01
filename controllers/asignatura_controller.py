@@ -19,6 +19,7 @@ class AsignaturaController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear asignatura")
         finally:
             conn.close()
         
@@ -29,21 +30,18 @@ class AsignaturaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM asignaturas WHERE id_asignatura = %s", (asignatura_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
-            
-            content={
-                    'id':int(result[0]),
-                    'id_programa':int(result[1]),
-                    'nombre':result[2],
-                    'codigo':result[3],
-                    'horas_semanales':int(result[4]),
-                    'estado':bool(result[5])
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
+
             if result:
+                content={
+                        'id':int(result[0]),
+                        'id_programa':int(result[1]),
+                        'nombre':result[2],
+                        'codigo':result[3],
+                        'horas_semanales':int(result[4]),
+                        'estado':bool(result[5])
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -56,6 +54,7 @@ class AsignaturaController:
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener asignatura")
         finally:
             conn.close()
     
@@ -65,21 +64,21 @@ class AsignaturaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM asignaturas")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'id_programa':int(data[1]),
-                    'nombre':data[2],
-                    'codigo':data[3],
-                    'horas_semanales':int(data[4]),
-                    'estado':bool(data[5])
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'id_programa':int(data[1]),
+                        'nombre':data[2],
+                        'codigo':data[3],
+                        'horas_semanales':int(data[4]),
+                        'estado':bool(data[5])
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
                 raise HTTPException(status_code=404, detail="asignatura not found")  

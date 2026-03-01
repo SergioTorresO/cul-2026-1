@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from controllers.asignatura_controller import *
 from models.asignatura_model import Asignatura
+from validations.asignatura_validation import validate
 
 router = APIRouter()
 
@@ -9,6 +10,10 @@ nuevo_asignatura = AsignaturaController()
 
 @router.post("/create_asignatura")
 async def create_asignatura(asignatura: Asignatura):
+    validation = validate(asignatura)
+    if "error" in validation:
+        raise HTTPException(status_code=400, detail=validation["error"])
+    
     rpta = nuevo_asignatura.create_asignatura(asignatura)
     return rpta
 

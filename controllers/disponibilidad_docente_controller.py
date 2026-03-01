@@ -19,7 +19,7 @@ class DisponibilidadDocenteController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
-            return {"error": str(err)}
+            raise HTTPException(status_code=500, detail="Error al crear disponibilidadDocente")
         finally:
             conn.close()
         
@@ -30,34 +30,32 @@ class DisponibilidadDocenteController:
             cursor = conn.cursor()
             cursor.execute("SELECT dd.id_disponibilidad, dd.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, dd.dia_semana, dd.hora_inicio, dd.hora_fin, dd.observacion FROM disponibilidad_docente dd join docentes d on dd.id_docente = d.id_docente WHERE id_disponibilidad = %s", (disponibilidad_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
-            
-            content={
-                    'id':int(result[0]),
-                    'id_docente':int(result[1]),
-                    'nombre':f"{result[2]} {result[3] if result[3] else ''} {result[4]} {result[5] if result[5] else ''}".strip(),
-                    'dia_semana':result[6],
-                    'hora_inicio':result[7],
-                    'hora_fin':result[8],
-                    'observacion':result[9]
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
+
             if result:
+                content={
+                        'id':int(result[0]),
+                        'id_docente':int(result[1]),
+                        'nombre':f"{result[2]} {result[3] if result[3] else ''} {result[4]} {result[5] if result[5] else ''}".strip(),
+                        'dia_semana':result[6],
+                        'hora_inicio':result[7],
+                        'hora_fin':result[8],
+                        'observacion':result[9]
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
                 ## comunica al cliente de la API qué pasó (error HTTP).
                 ##código 404,comportamiento correcto según las reglas HTTP
-                raise HTTPException(status_code=404, detail="disponibilidadDocente not found")  
+                raise HTTPException(status_code=404, detail="disponibilidad docente not found")  
                 
         except psycopg2.Error as err:
             print(err)
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener disponibilidad docente")
         finally:
             conn.close()
     
@@ -67,28 +65,30 @@ class DisponibilidadDocenteController:
             cursor = conn.cursor()
             cursor.execute("SELECT dd.id_disponibilidad, dd.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, dd.dia_semana, dd.hora_inicio, dd.hora_fin, dd.observacion FROM disponibilidad_docente dd join docentes d on dd.id_docente = d.id_docente")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'id_docente':data[1],
-                    'nombre':f"{data[2]} {data[3] if data[3] else ''} {data[4]} {data[5] if data[5] else ''}".strip(),
-                    'dia_semana':data[6],
-                    'hora_inicio':data[7],
-                    'hora_fin':data[8],
-                    'observacion':data[9]
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
+
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'id_docente':data[1],
+                        'nombre':f"{data[2]} {data[3] if data[3] else ''} {data[4]} {data[5] if data[5] else ''}".strip(),
+                        'dia_semana':data[6],
+                        'hora_inicio':data[7],
+                        'hora_fin':data[8],
+                        'observacion':data[9]
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
-                raise HTTPException(status_code=404, detail="disponibilidadDocente not found")  
+                raise HTTPException(status_code=404, detail="disponibilidad docente not found")  
                 
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener disponibilidad docentes")
         finally:
             conn.close()

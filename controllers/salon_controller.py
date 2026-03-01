@@ -19,6 +19,7 @@ class SalonController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear salon")
         finally:
             conn.close()
         
@@ -29,21 +30,18 @@ class SalonController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM salones WHERE id_salon = %s", (salon_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
             
-            content={
-                    'id':int(result[0]),
-                    'codigo':result[1],
-                    'capacidad':result[2],
-                    'tipo':result[3],
-                    'ubicacion':result[4],
-                    'estado':result[5],
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
             if result:
+                content={
+                        'id':int(result[0]),
+                        'codigo':result[1],
+                        'capacidad':result[2],
+                        'tipo':result[3],
+                        'ubicacion':result[4],
+                        'estado':result[5],
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -65,21 +63,22 @@ class SalonController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM salones")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'codigo':data[1],
-                    'capacidad':data[2],
-                    'tipo':data[3],
-                    'ubicacion':data[4],
-                    'estado':data[5],
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
+
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'codigo':data[1],
+                        'capacidad':data[2],
+                        'tipo':data[3],
+                        'ubicacion':data[4],
+                        'estado':data[5],
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
                 raise HTTPException(status_code=404, detail="salon not found")  
@@ -87,5 +86,6 @@ class SalonController:
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener salones")
         finally:
             conn.close()

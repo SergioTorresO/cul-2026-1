@@ -19,6 +19,7 @@ class ProgramaController:
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear programa")
         finally:
             conn.close()
         
@@ -29,19 +30,16 @@ class ProgramaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM programas WHERE id_programa = %s", (programa_id,))
             result = cursor.fetchone()
-            payload = []
-            content = {} 
             
-            content={
-                    'id':int(result[0]),
-                    'nombre':result[1],
-                    'codigo':result[2],
-                    'estado':result[3],
-            }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
             if result:
+                content={
+                        'id':int(result[0]),
+                        'nombre':result[1],
+                        'codigo':result[2],
+                        'estado':result[3],
+                }
+                
+                json_data = jsonable_encoder(content)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -54,6 +52,7 @@ class ProgramaController:
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener programa")
         finally:
             conn.close()
     
@@ -63,19 +62,20 @@ class ProgramaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM programas")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id':data[0],
-                    'nombre':data[1],
-                    'codigo':data[2],
-                    'estado':data[3],
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
+
             if result:
+                payload = []
+                content = {} 
+                for data in result:
+                    content={
+                        'id':data[0],
+                        'nombre':data[1],
+                        'codigo':data[2],
+                        'estado':data[3],
+                    }
+                    payload.append(content)
+                    content = {}
+                json_data = jsonable_encoder(payload)        
                 return {"resultado": json_data}
             else:
                 raise HTTPException(status_code=404, detail="programa not found")  
@@ -83,5 +83,6 @@ class ProgramaController:
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener programas")
         finally:
             conn.close()
