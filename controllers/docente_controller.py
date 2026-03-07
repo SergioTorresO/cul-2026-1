@@ -19,12 +19,10 @@ class DocenteController:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
             # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
-            if conn:
-                conn.rollback()
+            conn.rollback()
             raise HTTPException(status_code=500, detail="Error al crear docente")
         finally:
-            if conn:
-                conn.close()
+            conn.close()
         
 
     def get_docente(self, docente_id: int):
