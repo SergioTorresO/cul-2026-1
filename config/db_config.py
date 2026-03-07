@@ -4,11 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+DATABASE_URL = os.getenv("DBURL")
+
 def get_db_connection():
-    return psycopg2.connect(
-        host=os.getenv("DBHOST"),
-        port=os.getenv("DBPORT"),
-        user=os.getenv("DBUSER"),
-        password=os.getenv("DBPASSWORD"),
-        database=os.getenv("DBNAME")
-    )
+    return psycopg2.connect(DATABASE_URL)
