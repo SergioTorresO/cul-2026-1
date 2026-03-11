@@ -1,4 +1,3 @@
-from config.db_config import get_db_connection
 from controllers.docente_controller import DocenteController
 from models.disponibilidad_docente_model import DisponibilidadDocente
 

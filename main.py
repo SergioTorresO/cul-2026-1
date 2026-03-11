@@ -11,6 +11,8 @@ from routes.salon_routes import router as salon_router
 from routes.programa_routes import router as programa_router
 from routes.docente_asignatura_routes import router as docente_asignatura_router
 from routes.facultad_routes import router as facultad_router
+from routes.auth_routes import router as auth_router
+from routes.usuario_routes import router as usuario_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -42,6 +44,8 @@ app.include_router(salon_router)
 app.include_router(programa_router)
 app.include_router(docente_asignatura_router)
 app.include_router(facultad_router)
+app.include_router(auth_router)
+app.include_router(usuario_router)
 
 
 if __name__ == "__main__":
