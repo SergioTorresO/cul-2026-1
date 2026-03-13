@@ -32,23 +32,64 @@ class DocenteController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT d.tipo_documento,d.numero_documento,d.primer_nombre,d.segundo_nombre,d.primer_apellido,d.segundo_apellido,d.telefono,d.email,d.password_hash,d.id_rol, r.nombre, d.estado FROM docentes d join roles r on d.id_rol = r.id_rol WHERE d.id_docente = %s", (docente_id,))
+            cursor.execute("SELECT d.id_docente, d.tipo_documento,d.numero_documento,d.primer_nombre,d.segundo_nombre,d.primer_apellido,d.segundo_apellido,d.telefono,d.email,d.id_rol, r.nombre, d.estado FROM docentes d join roles r on d.id_rol = r.id_rol WHERE d.id_docente = %s", (docente_id,))
             result = cursor.fetchone()
 
             if result:
                 content={
-                    'tipo_documento':result[0],
-                    'n_documento':int(result[1]),
-                    'primer_nombre':result[2],
-                    'segundo_nombre':result[3],
-                    'primer_apellido':result[4],
-                    'segundo_apellido':result[5],
-                    'telefono':result[6],
-                    'email':result[7],
-                    'password_hash':result[8],
+                    'id':int(result[0]),
+                    'tipo_documento':result[1],
+                    'n_documento':int(result[2]),
+                    'primer_nombre':result[3],
+                    'segundo_nombre':result[4],
+                    'primer_apellido':result[5],
+                    'segundo_apellido':result[6],
+                    'telefono':result[7],
+                    'email':result[8],
                     'id_rol':int(result[9]),
                     'rol':result[10],
                     'estado':bool(result[11])
+                }
+                
+                        
+                return content
+            else:
+                ##Esto interrumpe la ejecución y responde al cliente con un código 404
+                ## comunica al cliente de la API qué pasó (error HTTP).
+                ##código 404,comportamiento correcto según las reglas HTTP
+                raise HTTPException(status_code=404, detail="docente not found")  
+                
+        except psycopg2.Error as err:
+            print(err)
+            # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
+            ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
+            conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener docente")
+        finally:
+            conn.close()
+
+    def get_docente_email(self, email: str):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT d.id_docente, d.tipo_documento,d.numero_documento,d.primer_nombre,d.segundo_nombre,d.primer_apellido,d.segundo_apellido,d.telefono,d.email,d.password_hash,d.id_rol, r.nombre, d.estado FROM docentes d join roles r on d.id_rol = r.id_rol WHERE d.email = %s", (email,))
+            result = cursor.fetchone()
+
+            if result:
+                content={
+                    'id':int(result[0]),
+                    'tipo_documento':result[1],
+                    'n_documento':int(result[2]),
+                    'primer_nombre':result[3],
+                    'segundo_nombre':result[4],
+                    'primer_apellido':result[5],
+                    'segundo_apellido':result[6],
+                    'telefono':result[7],
+                    'email':result[8],
+                    'password_hash':result[9],
+                    'id_rol':int(result[10]),
+                    'rol':result[11],
+                    'estado':bool(result[12])
                 }
                 
                 json_data = jsonable_encoder(content)            
@@ -72,7 +113,7 @@ class DocenteController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM docentes")
+            cursor.execute("SELECT d.id_docente, d.tipo_documento,d.numero_documento,d.primer_nombre,d.segundo_nombre,d.primer_apellido,d.segundo_apellido,d.telefono,d.email,d.id_rol, r.nombre, d.estado FROM docentes d join roles r on d.id_rol = r.id_rol")
             result = cursor.fetchall()
 
             if result:
@@ -80,16 +121,18 @@ class DocenteController:
                 content = {} 
                 for data in result:
                     content={
-                        'id':data[0],
+                        'id':int(data[0]),
                         'tipo_documento':data[1],
                         'n_documento':int(data[2]),
                         'primer_nombre':data[3],
                         'segundo_nombre':data[4],
                         'primer_apellido':data[5],
                         'segundo_apellido':data[6],
-                        'email':data[7],
-                        'telefono':data[8],
-                        'estado':bool(data[9])
+                        'telefono':data[7],
+                        'email':data[8],
+                        'id_rol':int(data[9]),
+                        'rol':data[10],
+                        'estado':bool(data[11])
                     }
                     payload.append(content)
                     content = {}

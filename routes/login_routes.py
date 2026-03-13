@@ -6,9 +6,7 @@ router = APIRouter()
 
 @router.post("/login")
 async def login(login:Login):
-    print("usuario",login)
     validation = validate(login)
-    print(validation)
     
     if "error" in validation:
         raise HTTPException(status_code=401, detail=validation["error"])
