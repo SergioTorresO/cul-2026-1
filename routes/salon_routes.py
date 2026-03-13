@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from controllers.salon_controller import *
+from middlewares.protected_routes import require_role
 from models.salon_model import Salon
 from validations.salon_validation import validate
 
@@ -9,7 +10,7 @@ nuevo_salon = SalonController()
 
 
 @router.post("/create_salon")
-async def create_salon(salon: Salon):
+async def create_salon(salon: Salon, user = Depends(require_role(1))):
     validation = validate(salon)
     if "error" in validation:
         raise HTTPException(status_code=400, detail=validation["error"])

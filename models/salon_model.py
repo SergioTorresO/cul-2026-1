@@ -6,4 +6,4 @@ class Salon(BaseModel):
     capacidad: int
     tipo: str
     ubicacion: str
-    estado: bool
+    estado: bool = True

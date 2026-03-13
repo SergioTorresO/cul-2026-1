@@ -48,7 +48,7 @@ class HorarioController:
                 }
                 
                 json_data = jsonable_encoder(content)            
-                return  json_data
+                return {"resultado": json_data}
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
                 ## comunica al cliente de la API qué pasó (error HTTP).
@@ -70,7 +70,6 @@ class HorarioController:
             cursor = conn.cursor()
             cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, h.id_salon, s.codigo, h.id_jornada , j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join docentes d on h.id_docente = d.id_docente join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada WHERE h.id_docente = %s", (docente_id,))
             result = cursor.fetchall()
-            print("result", result)
 
             if result:
                 payload = []
@@ -92,7 +91,7 @@ class HorarioController:
                         }
                     payload.append(content)
                 json_data = jsonable_encoder(payload)            
-                return  json_data
+                return {"resultado": json_data}
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
                 ## comunica al cliente de la API qué pasó (error HTTP).
