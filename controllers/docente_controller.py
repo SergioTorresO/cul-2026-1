@@ -3,15 +3,18 @@ from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.docente_model import Docente
 from fastapi.encoders import jsonable_encoder
-    
+from utility.security import hash_password
+
 class DocenteController:
         
     def create_docente(self, docente: Docente): 
-        conn = None  
         try:
+            #password_hash
+            docente.password_hash = hash_password(docente.password_hash)
+
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO docentes (tipo_documento,numero_documento,primer_nombre,segundo_nombre,primer_apellido,segundo_apellido,email,telefono,estado) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)", (docente.tipo_documento,docente.n_documento,docente.primer_nombre,docente.segundo_nombre,docente.primer_apellido,docente.segundo_apellido,docente.email,docente.telefono,docente.estado))
+            cursor.execute("INSERT INTO docentes (tipo_documento,numero_documento,primer_nombre,segundo_nombre,primer_apellido,segundo_apellido,telefono,email,password_hash,id_rol,estado) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (docente.tipo_documento,docente.n_documento,docente.primer_nombre,docente.segundo_nombre,docente.primer_apellido,docente.segundo_apellido,docente.telefono,docente.email,docente.password_hash,docente.id_rol, docente.estado))
             conn.commit()
             conn.close()
             return {"resultado": "Docente creado"}
@@ -29,21 +32,23 @@ class DocenteController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM docentes WHERE id_docente = %s", (docente_id,))
+            cursor.execute("SELECT d.tipo_documento,d.numero_documento,d.primer_nombre,d.segundo_nombre,d.primer_apellido,d.segundo_apellido,d.telefono,d.email,d.password_hash,d.id_rol, r.nombre, d.estado FROM docentes d join roles r on d.id_rol = r.id_rol WHERE d.id_docente = %s", (docente_id,))
             result = cursor.fetchone()
 
             if result:
                 content={
-                        'id':int(result[0]),
-                        'tipo_documento':result[1],
-                        'n_documento':int(result[2]),
-                        'primer_nombre':result[3],
-                        'segundo_nombre':result[4],
-                        'primer_apellido':result[5],
-                        'segundo_apellido':result[6],
-                        'email':result[7],
-                        'telefono':result[8],
-                        'estado':bool(result[9])
+                    'tipo_documento':result[0],
+                    'n_documento':int(result[1]),
+                    'primer_nombre':result[2],
+                    'segundo_nombre':result[3],
+                    'primer_apellido':result[4],
+                    'segundo_apellido':result[5],
+                    'telefono':result[6],
+                    'email':result[7],
+                    'password_hash':result[8],
+                    'id_rol':int(result[9]),
+                    'rol':result[10],
+                    'estado':bool(result[11])
                 }
                 
                 json_data = jsonable_encoder(content)            

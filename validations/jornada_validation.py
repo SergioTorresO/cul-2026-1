@@ -6,13 +6,13 @@ def validate(data: Jornada):
     if not data.nombre.strip():
         return {"error": "Nombre de jornada es requerido"}
 
-    # Validar formato de hora (HH:MM)
-    hora_regex = r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$'
+    # Validar formato de hora (HH:MM:SS)
+    hora_regex = r'^([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$'
     if not re.match(hora_regex, data.hora_inicio):
-        return {"error": "Formato de hora de inicio no válido (debe ser HH:MM)"}
+        return {"error": "Formato de hora de inicio no válido (debe ser HH:MM:SS)"}
 
     if not re.match(hora_regex, data.hora_fin):
-        return {"error": "Formato de hora de fin no válido (debe ser HH:MM)"}
+        return {"error": "Formato de hora de fin no válido (debe ser HH:MM:SS)"}
 
     # Validar que hora_inicio < hora_fin
     if data.hora_inicio >= data.hora_fin:

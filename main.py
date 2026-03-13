@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from routes.docente_routes import router as docente_router
 from routes.semestre_routes import router as semestre_router
-from routes.asignacion_docente_routes import router as asignacion_docente_router
 from routes.asignatura_routes import router as asignatura_router
 from routes.disponibilidad_docente_routes import router as disponibilidad_docente_router
 from routes.grupo_routes import router as grupo_router
@@ -35,7 +34,6 @@ app.add_middleware(
 
 app.include_router(docente_router)
 app.include_router(semestre_router)
-app.include_router(asignacion_docente_router)
 app.include_router(asignatura_router)
 app.include_router(disponibilidad_docente_router)
 app.include_router(grupo_router)

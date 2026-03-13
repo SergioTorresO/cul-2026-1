@@ -10,7 +10,7 @@ class HorarioController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO horarios (id_grupo,id_salon,id_jornada,dia_semana,hora_inicio,hora_fin) VALUES (%s,%s,%s,%s,%s,%s)", (horario.id_grupo,horario.id_salon,horario.id_jornada,horario.dia_semana,horario.hora_inicio,horario.hora_fin))
+            cursor.execute("INSERT INTO horarios (id_grupo, id_docente, id_salon, id_jornada, dia_semana, hora_inicio, hora_fin) VALUES (%s, %s, %s, %s, %s, %s, %s)", (horario.id_grupo, horario.id_docente, horario.id_salon, horario.id_jornada, horario.dia_semana, horario.hora_inicio, horario.hora_fin))
             conn.commit()
             conn.close()
             return {"resultado": "horario creado"}
@@ -28,7 +28,7 @@ class HorarioController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_salon, s.codigo, h.id_jornada, j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada WHERE id_horario = %s", (horario_id,))
+            cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, h.id_salon, s.codigo, h.id_jornada , j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join docentes d on h.id_docente = d.id_docente join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada WHERE h.id_horario = %s", (horario_id,))
             result = cursor.fetchone()
             
             if result:
@@ -36,16 +36,62 @@ class HorarioController:
                         'id':int(result[0]),
                         'id_grupo':int(result[1]),
                         'codigo_grupo':result[2],
-                        'id_salon':int(result[3]),
-                        'codigo_salon':result[4],
-                        'id_jornada':int(result[5]),
-                        'jornada':result[6],
-                        'dia_semana':result[7],
-                        'hora_inicio':result[8],
-                        'hora_fin':result[9]
+                        'id_docente':int(result[3]),
+                        'docente':f"{result[4]} {result[5] if result[5] else ''} {result[6]} {result[7] if result[7] else ''}".strip(),
+                        'id_salon':int(result[8]),
+                        'codigo_salon':result[9],
+                        'id_jornada':int(result[10]),
+                        'jornada':result[11],
+                        'dia_semana':result[12],
+                        'hora_inicio':result[13],
+                        'hora_fin':result[14]
                 }
                 
                 json_data = jsonable_encoder(content)            
+                return  json_data
+            else:
+                ##Esto interrumpe la ejecución y responde al cliente con un código 404
+                ## comunica al cliente de la API qué pasó (error HTTP).
+                ##código 404,comportamiento correcto según las reglas HTTP
+                raise HTTPException(status_code=404, detail="horario not found")  
+                
+        except psycopg2.Error as err:
+            print(err)
+            # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
+            ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
+            conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al obtener horario")
+        finally:
+            conn.close()
+
+    def get_horario_docente(self, docente_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, h.id_salon, s.codigo, h.id_jornada , j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join docentes d on h.id_docente = d.id_docente join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada WHERE h.id_docente = %s", (docente_id,))
+            result = cursor.fetchall()
+            print("result", result)
+
+            if result:
+                payload = []
+                for data in result:
+                    content = {}
+                    content={
+                            'id':int(data[0]),
+                            'id_grupo':int(data[1]),
+                            'codigo_grupo':data[2],
+                            'id_docente':int(data[3]),
+                            'docente':f"{data[4]} {data[5] if data[5] else ''} {data[6]} {data[7] if data[7] else ''}".strip(),
+                            'id_salon':int(data[8]),
+                            'codigo_salon':data[9],
+                            'id_jornada':int(data[10]),
+                            'jornada':data[11],
+                            'dia_semana':data[12],
+                            'hora_inicio':data[13],
+                            'hora_fin':data[14]
+                        }
+                    payload.append(content)
+                json_data = jsonable_encoder(payload)            
                 return  json_data
             else:
                 ##Esto interrumpe la ejecución y responde al cliente con un código 404
@@ -66,7 +112,7 @@ class HorarioController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_salon, s.codigo, h.id_jornada, j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada")
+            cursor.execute("SELECT h.id_horario, h.id_grupo, g.codigo_grupo, h.id_docente, d.primer_nombre, d.segundo_nombre, d.primer_apellido, d.segundo_apellido, h.id_salon, s.codigo, h.id_jornada , j.nombre, h.dia_semana, h.hora_inicio, h.hora_fin FROM horarios h join grupos g on h.id_grupo = g.id_grupo join docentes d on h.id_docente = d.id_docente join salones s on h.id_salon = s.id_salon join jornadas j on h.id_jornada = j.id_jornada")
             result = cursor.fetchall()
 
             if result:
@@ -77,13 +123,15 @@ class HorarioController:
                         'id':data[0],
                         'id_grupo':data[1],
                         'codigo_grupo':data[2],
-                        'id_salon':data[3],
-                        'codigo_salon':data[4],
-                        'id_jornada':data[5],
-                        'jornada':data[6],
-                        'dia_semana':data[7],
-                        'hora_inicio':data[8],
-                        'hora_fin':data[9]
+                        'id_docente':data[3],
+                        'docente':f"{data[4]} {data[5] if data[5] else ''} {data[6]} {data[7] if data[7] else ''}".strip(),
+                        'id_salon':data[8],
+                        'codigo_salon':data[9],
+                        'id_jornada':data[10],
+                        'jornada':data[11],
+                        'dia_semana':data[12],
+                        'hora_inicio':data[13],
+                        'hora_fin':data[14]
                     }
                     payload.append(content)
                     content = {}

@@ -23,6 +23,11 @@ async def get_horario(horario_id: int):
     rpta = nuevo_horario.get_horario(horario_id)
     return rpta
 
+@router.get("/get_horario_docente/{docente_id}")
+async def get_horario_docente(docente_id: int):
+    rpta = nuevo_horario.get_horario_docente(docente_id)
+    return rpta
+
 @router.get("/get_horarios/")
 async def get_horarios():
     rpta = nuevo_horario.get_horarios()

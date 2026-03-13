@@ -8,6 +8,9 @@ class Docente(BaseModel):
     segundo_nombre: str | None
     primer_apellido: str
     segundo_apellido: str | None
-    email: str
     telefono: str
+    email: str
+    password_hash: str
+    id_rol: int = 2
+    rol: str | None
     estado: bool = True
